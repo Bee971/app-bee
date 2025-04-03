@@ -1,11 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import { Database } from '../types/supabase';
 
 // Charger les variables d'environnement
 dotenv.config();
 
-const supabase = createClient<Database>(
+const supabase = createClient(
   process.env.EXPO_PUBLIC_SUPABASE_URL!,
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
 );
@@ -95,7 +94,7 @@ const exerciseTranslations: Record<string, string> = {
 async function fetchExercisesFromWGER(): Promise<WgerExercise[]> {
   try {
     const response = await fetch('https://wger.de/api/v2/exercise/?language=2&limit=200');
-    const data = await response.json();
+    const data = (await response.json()) as { results: WgerExercise[] };
     return data.results;
   } catch (error) {
     console.error('Erreur lors de la récupération des exercices depuis WGER:', error);
