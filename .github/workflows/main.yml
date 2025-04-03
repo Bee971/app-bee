@@ -1,0 +1,44 @@
+name: Import Exercises
+
+on:
+  schedule:
+    # Exécuter tous les lundis à 00:00 UTC
+    - cron: '0 0 * * 1'
+  # Permettre l'exécution manuelle depuis l'interface GitHub
+  workflow_dispatch:
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run import script
+        run: npm run import-exercises
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '❌ Échec de l\'importation des exercices',
+              body: `L'importation automatique des exercices a échoué le ${new Date().toLocaleDateString('fr-FR')}.\n\nConsultez les logs du workflow pour plus de détails.`,
+              labels: ['bug', 'automation']
+            });
